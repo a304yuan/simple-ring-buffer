@@ -23,11 +23,8 @@ void ring_buffer_free(ring_buffer * buf) {
 
 int ring_buffer_read(ring_buffer * buf, void * dest) {
     long count = atomic_load_explicit(&buf->count, memory_order_relaxed);
-    while (count > 0) {
-        if (atomic_compare_exchange_strong(&buf->count, &count, count - 1)) {
-            break;
-        }
-    }
+    while (count > 0 && !atomic_compare_exchange_strong(&buf->count, &count, count - 1));
+    // return when nothing to read
     if (count == 0) {
         return 0;
     }
@@ -42,11 +39,8 @@ int ring_buffer_read(ring_buffer * buf, void * dest) {
 
 int ring_buffer_write(ring_buffer * buf, void * src) {
     long count = atomic_load_explicit(&buf->count, memory_order_relaxed);
-    while (count < buf->capacity) {
-        if (atomic_compare_exchange_strong(&buf->count, &count, count + 1)) {
-            break;
-        }
-    }
+    while (count < buf->capacity && !atomic_compare_exchange_strong(&buf->count, &count, count + 1));
+    // return when it is full
     if (count == buf->capacity) {
         return 0;
     }
