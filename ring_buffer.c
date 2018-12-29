@@ -37,7 +37,7 @@ int ring_buffer_read(ring_buffer * buf, void * dest) {
     return 1;
 }
 
-int ring_buffer_write(ring_buffer * buf, void * src) {
+int ring_buffer_write(ring_buffer * buf, const void * src) {
     long count = atomic_load(&buf->count);
     while (count < buf->capacity && !atomic_compare_exchange_weak(&buf->count, &count, count + 1));
     // return when it is full
